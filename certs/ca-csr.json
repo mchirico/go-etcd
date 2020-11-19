@@ -1,0 +1,23 @@
+{
+    "CN": "cwxstat.io",
+    "hosts": [
+        "cwxstat.io",
+        "s.cwxstat.io",
+        "localhost",
+        "127.0.0.1",
+        "etcd.cwxstat.io",
+        "157.230.64.59"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "ST": "PA",
+            "L": "Elkins Park"
+        }
+    ]
+}
+
