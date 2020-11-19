@@ -43,6 +43,7 @@ func main() {
 	kv := clientv3.NewKV(cli)
 
 	GetSingleValueDemo(ctx, kv)
+    GetSingleValueDemo2(ctx, kv)
     LeaseDemo(ctx, cli, kv)
     GetMultipleValuesWithPaginationDemo(ctx, kv)
 }
@@ -136,4 +137,29 @@ func GetMultipleValuesWithPaginationDemo(ctx context.Context, kv clientv3.KV) {
     for _, item := range gr.Kvs[1:] {
         fmt.Println(string(item.Key), string(item.Value))
     }
+}
+
+
+func GetSingleValueDemo2(ctx context.Context, kv clientv3.KV) {
+    fmt.Println("*** GetSingleValueDemo()")
+    // Delete all keys
+    kv.Delete(ctx, "key", clientv3.WithPrefix())
+
+    // Insert a key value
+    pr, _ := kv.Put(ctx, "key", "444")
+    rev := pr.Header.Revision
+    fmt.Println("Revision:", rev)
+
+    gr, _ := kv.Get(ctx, "key")
+    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+
+    // Modify the value of an existing key (create new revision)
+    kv.Put(ctx, "key", "555")
+
+    gr, _ = kv.Get(ctx, "key")
+    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+
+    // Get the value of the previous revision
+    gr, _ = kv.Get(ctx, "key", clientv3.WithRev(rev))
+    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 }
