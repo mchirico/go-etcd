@@ -9,8 +9,8 @@
         "157.230.64.59"
     ],
     "key": {
-        "algo": "rsa",
-        "size": 2048
+        "algo": "ecdsa",
+        "size": 256
     },
     "names": [
         {
