@@ -13,11 +13,10 @@ run:
 
 
 deploy:
-	gcloud run deploy goetc  --image gcr.io/septapig/goetc:test --platform managed \
+	gcloud beta run deploy goetc  --image gcr.io/septapig/goetc:test --platform managed \
             --allow-unauthenticated --project septapig \
             --vpc-connector=cloudvpc-east \
             --vpc-egress=all \
             --region us-east1 --port 3000 --max-instances 1  --memory 256Mi
-
 
 
