@@ -59,6 +59,7 @@ func (e ETC) EtcdRun() string {
 	LeaseDemo(ctx, cli, kv)
 	GetMultipleValuesWithPaginationDemo(ctx, kv)
 
+	Watch(cli)
 	for i := 0; i < 9; i++ {
 		Txn(ctx, kv)
 	}
@@ -137,6 +138,21 @@ func Txn(ctx context.Context, kv clientv3.KV) {
 	fmt.Println("\n\nTxn:\nValue: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
 
+}
+
+func Watch(cli *clientv3.Client ) {
+
+
+	rch := cli.Watch(context.Background(), "foo", clientv3.WithPrefix())
+
+	go func(chn clientv3.WatchChan) {
+		for wresp := range chn {
+			for _, ev := range wresp.Events {
+				fmt.Printf("WATCH!!")
+				fmt.Printf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+			}
+		}
+	}(rch)
 }
 
 func GetMultipleValuesWithPaginationDemo(ctx context.Context, kv clientv3.KV) {
