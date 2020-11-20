@@ -137,11 +137,9 @@ func Txn(ctx context.Context, kv clientv3.KV) {
 	gr, _ := kv.Get(ctx, "foo")
 	fmt.Println("\n\nTxn:\nValue: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-
 }
 
-func Watch(cli *clientv3.Client ) {
-
+func Watch(cli *clientv3.Client) {
 
 	rch := cli.Watch(context.Background(), "foo", clientv3.WithPrefix())
 
