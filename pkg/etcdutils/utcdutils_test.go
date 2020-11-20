@@ -1,7 +1,12 @@
-package main
+package etcdutils
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestRun(t *testing.T) {
-	Run()
+	e := NewETC("../../certs")
+	r := e.EtcdRun()
+	fmt.Println(r)
 }

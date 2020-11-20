@@ -1,4 +1,4 @@
-package main
+package etcdutils
 
 import (
 	"context"
@@ -17,10 +17,21 @@ var (
 	requestTimeout = 10 * time.Second
 )
 
-func Run() {
+type ETC struct {
+	CertsDir string
+}
+
+func NewETC(certsDir string) ETC {
+	e := ETC{}
+	e.CertsDir = certsDir
+	return e
+}
+
+// "../../certs/client.pem"
+func (e ETC)EtcdRun() string {
 	ctx, _ := context.WithTimeout(context.Background(), requestTimeout)
-	cert, err := tls.LoadX509KeyPair("../../certs/client.pem", "../../certs/client-key.pem")
-	caCert, err := ioutil.ReadFile("../../certs/ca.pem")
+	cert, err := tls.LoadX509KeyPair(e.CertsDir+"/client.pem", e.CertsDir+"/client-key.pem")
+	caCert, err := ioutil.ReadFile(e.CertsDir+"/ca.pem")
 	caCertPool := x509.NewCertPool()
 
 	if err != nil {
@@ -44,13 +55,15 @@ func Run() {
 	defer cli.Close()
 	kv := clientv3.NewKV(cli)
 
-	GetSingleValueDemo(ctx, kv)
+	s := GetSingleValueDemo(ctx, kv)
     GetSingleValueDemo2(ctx, kv)
     LeaseDemo(ctx, cli, kv)
     GetMultipleValuesWithPaginationDemo(ctx, kv)
+
+	return s
 }
 
-func GetSingleValueDemo(ctx context.Context, kv clientv3.KV) {
+func GetSingleValueDemo(ctx context.Context, kv clientv3.KV) string {
 	fmt.Println("*** GetSingleValueDemo()")
 
 	// Insert a key value
@@ -61,18 +74,20 @@ func GetSingleValueDemo(ctx context.Context, kv clientv3.KV) {
 
     gr, _ := kv.Get(ctx, "slop")
     fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+    s := fmt.Sprintln("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
     // Modify the value of an existing key (create new revision)
     kv.Put(ctx, "slop", "555")
 
     gr, _ = kv.Get(ctx, "slop")
     fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+    s += fmt.Sprintln("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
     // Get the value of the previous revision
     gr, _ = kv.Get(ctx, "slop", clientv3.WithRev(rev))
     fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-
+    return s
 }
 
 func LeaseDemo(ctx context.Context, cli *clientv3.Client, kv clientv3.KV) {
