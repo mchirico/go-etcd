@@ -59,6 +59,9 @@ func (e ETC) EtcdRun() string {
 	LeaseDemo(ctx, cli, kv)
 	GetMultipleValuesWithPaginationDemo(ctx, kv)
 
+	for i := 0; i < 9; i++ {
+		Txn(ctx, kv)
+	}
 	return s
 }
 
@@ -115,6 +118,25 @@ func LeaseDemo(ctx context.Context, cli *clientv3.Client, kv clientv3.KV) {
 	if len(gr.Kvs) == 0 {
 		fmt.Println("No more 'key'")
 	}
+}
+
+func Txn(ctx context.Context, kv clientv3.KV) {
+
+	tx := kv.Txn(ctx)
+
+	txresp, err := tx.If(
+		clientv3.Compare(clientv3.Value("foo"), "=", "bar"),
+	).Then(
+		clientv3.OpPut("foo", "sanfoo"), clientv3.OpPut("newfoo", "newbar"),
+	).Else(
+		clientv3.OpPut("foo", "bar"), clientv3.OpDelete("newfoo"),
+	).Commit()
+	fmt.Println(txresp, err)
+
+	gr, _ := kv.Get(ctx, "foo")
+	fmt.Println("\n\nTxn:\nValue: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+
+
 }
 
 func GetMultipleValuesWithPaginationDemo(ctx context.Context, kv clientv3.KV) {
