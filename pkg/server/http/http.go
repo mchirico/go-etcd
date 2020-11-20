@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/mchirico/go-etcd/pkg/etcdutils"
 	"github.com/mchirico/go-etcd/pkg/server/http/handles"
 	"log"
 	"net/http"
@@ -9,7 +10,11 @@ import (
 
 func SetupHandles() {
 
-	http.HandleFunc("/", handles.BaseRoot)
+	h := handles.HANDLE{}
+	e := etcdutils.NewETC("/certs")
+	h.Process = e.EtcdRun
+
+	http.HandleFunc("/", h.BaseRoot)
 	http.HandleFunc("/gauge", handles.Gauge)
 	http.HandleFunc("/line", handles.Line)
 	http.HandleFunc("/heatmap", handles.Heatmap)

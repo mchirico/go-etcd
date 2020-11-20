@@ -2,14 +2,14 @@ package etcdutils
 
 import (
 	"context"
-    "crypto/tls"
-    "crypto/x509"
-    "fmt"
-    "github.com/etcd-io/etcd/clientv3"
-    "io/ioutil"
-    "log"
-    "strconv"
-    "time"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"github.com/etcd-io/etcd/clientv3"
+	"io/ioutil"
+	"log"
+	"strconv"
+	"time"
 )
 
 var (
@@ -28,10 +28,10 @@ func NewETC(certsDir string) ETC {
 }
 
 // "../../certs/client.pem"
-func (e ETC)EtcdRun() string {
+func (e ETC) EtcdRun() string {
 	ctx, _ := context.WithTimeout(context.Background(), requestTimeout)
 	cert, err := tls.LoadX509KeyPair(e.CertsDir+"/client.pem", e.CertsDir+"/client-key.pem")
-	caCert, err := ioutil.ReadFile(e.CertsDir+"/ca.pem")
+	caCert, err := ioutil.ReadFile(e.CertsDir + "/ca.pem")
 	caCertPool := x509.NewCertPool()
 
 	if err != nil {
@@ -49,16 +49,15 @@ func (e ETC)EtcdRun() string {
 		DialTimeout: dialTimeout,
 		Endpoints:   []string{"etcd.cwxstat.io:2379"},
 
-
-		TLS:         tlsConfig,
+		TLS: tlsConfig,
 	})
 	defer cli.Close()
 	kv := clientv3.NewKV(cli)
 
 	s := GetSingleValueDemo(ctx, kv)
-    GetSingleValueDemo2(ctx, kv)
-    LeaseDemo(ctx, cli, kv)
-    GetMultipleValuesWithPaginationDemo(ctx, kv)
+	GetSingleValueDemo2(ctx, kv)
+	LeaseDemo(ctx, cli, kv)
+	GetMultipleValuesWithPaginationDemo(ctx, kv)
 
 	return s
 }
@@ -71,112 +70,109 @@ func GetSingleValueDemo(ctx context.Context, kv clientv3.KV) string {
 	rev := pr.Header.Revision
 	fmt.Println("Revision:", rev)
 
+	gr, _ := kv.Get(ctx, "slop")
+	fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	s := fmt.Sprintln("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-    gr, _ := kv.Get(ctx, "slop")
-    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
-    s := fmt.Sprintln("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	// Modify the value of an existing key (create new revision)
+	kv.Put(ctx, "slop", "555")
 
-    // Modify the value of an existing key (create new revision)
-    kv.Put(ctx, "slop", "555")
+	gr, _ = kv.Get(ctx, "slop")
+	fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	s += fmt.Sprintln("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-    gr, _ = kv.Get(ctx, "slop")
-    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
-    s += fmt.Sprintln("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	// Get the value of the previous revision
+	gr, _ = kv.Get(ctx, "slop", clientv3.WithRev(rev))
+	fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-    // Get the value of the previous revision
-    gr, _ = kv.Get(ctx, "slop", clientv3.WithRev(rev))
-    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
-
-    return s
+	return s
 }
 
 func LeaseDemo(ctx context.Context, cli *clientv3.Client, kv clientv3.KV) {
-    fmt.Println("*** LeaseDemo()")
-    // Delete all keys
-    kv.Delete(ctx, "key", clientv3.WithPrefix())
+	fmt.Println("*** LeaseDemo()")
+	// Delete all keys
+	kv.Delete(ctx, "key", clientv3.WithPrefix())
 
-    gr, _ := kv.Get(ctx, "key")
-    if len(gr.Kvs) == 0 {
-        fmt.Println("No 'key'")
-    }
+	gr, _ := kv.Get(ctx, "key")
+	if len(gr.Kvs) == 0 {
+		fmt.Println("No 'key'")
+	}
 
+	lease, _ := cli.Grant(ctx, 1)
 
-    lease, _ := cli.Grant(ctx, 1)
+	// Insert key with a lease of 1 second TTL
+	kv.Put(ctx, "key", "value", clientv3.WithLease(lease.ID))
 
-    // Insert key with a lease of 1 second TTL
-    kv.Put(ctx, "key", "value", clientv3.WithLease(lease.ID))
+	gr, _ = kv.Get(ctx, "key")
+	if len(gr.Kvs) == 1 {
+		fmt.Println("Found 'key'")
+	}
 
-    gr, _ = kv.Get(ctx, "key")
-    if len(gr.Kvs) == 1 {
-        fmt.Println("Found 'key'")
-    }
+	// Let the TTL expire
+	time.Sleep(3 * time.Second)
 
-    // Let the TTL expire
-    time.Sleep(3 * time.Second)
-
-    gr, _ = kv.Get(ctx, "key")
-    if len(gr.Kvs) == 0 {
-        fmt.Println("No more 'key'")
-    }
+	gr, _ = kv.Get(ctx, "key")
+	if len(gr.Kvs) == 0 {
+		fmt.Println("No more 'key'")
+	}
 }
 
 func GetMultipleValuesWithPaginationDemo(ctx context.Context, kv clientv3.KV) {
-    fmt.Println("*** GetMultipleValuesWithPaginationDemo()")
-    // Delete all keys
-    kv.Delete(ctx, "key", clientv3.WithPrefix())
+	fmt.Println("*** GetMultipleValuesWithPaginationDemo()")
+	// Delete all keys
+	kv.Delete(ctx, "key", clientv3.WithPrefix())
 
-    // Insert 20 keys
-    for i := 0; i < 20; i++ {
-        k := fmt.Sprintf("key_%02d", i)
-        kv.Put(ctx, k, strconv.Itoa(i))
-    }
+	// Insert 20 keys
+	for i := 0; i < 20; i++ {
+		k := fmt.Sprintf("key_%02d", i)
+		kv.Put(ctx, k, strconv.Itoa(i))
+	}
 
-    opts := []clientv3.OpOption{
-        clientv3.WithPrefix(),
-        clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend),
-        clientv3.WithLimit(3),
-    }
+	opts := []clientv3.OpOption{
+		clientv3.WithPrefix(),
+		clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend),
+		clientv3.WithLimit(3),
+	}
 
-    gr, _ := kv.Get(ctx, "key", opts...)
+	gr, _ := kv.Get(ctx, "key", opts...)
 
-    fmt.Println("--- First page ---")
-    for _, item := range gr.Kvs {
-        fmt.Println(string(item.Key), string(item.Value))
-    }
+	fmt.Println("--- First page ---")
+	for _, item := range gr.Kvs {
+		fmt.Println(string(item.Key), string(item.Value))
+	}
 
-    lastKey := string(gr.Kvs[len(gr.Kvs)-1].Key)
+	lastKey := string(gr.Kvs[len(gr.Kvs)-1].Key)
 
-    fmt.Println("--- Second page ---")
-    opts = append(opts, clientv3.WithFromKey())
-    gr, _ = kv.Get(ctx, lastKey, opts...)
+	fmt.Println("--- Second page ---")
+	opts = append(opts, clientv3.WithFromKey())
+	gr, _ = kv.Get(ctx, lastKey, opts...)
 
-    // Skipping the first item, which the last item from from the previous Get
-    for _, item := range gr.Kvs[1:] {
-        fmt.Println(string(item.Key), string(item.Value))
-    }
+	// Skipping the first item, which the last item from from the previous Get
+	for _, item := range gr.Kvs[1:] {
+		fmt.Println(string(item.Key), string(item.Value))
+	}
 }
 
-
 func GetSingleValueDemo2(ctx context.Context, kv clientv3.KV) {
-    fmt.Println("*** GetSingleValueDemo()")
-    // Delete all keys
-    kv.Delete(ctx, "key", clientv3.WithPrefix())
+	fmt.Println("*** GetSingleValueDemo()")
+	// Delete all keys
+	kv.Delete(ctx, "key", clientv3.WithPrefix())
 
-    // Insert a key value
-    pr, _ := kv.Put(ctx, "key", "444")
-    rev := pr.Header.Revision
-    fmt.Println("Revision:", rev)
+	// Insert a key value
+	pr, _ := kv.Put(ctx, "key", "444")
+	rev := pr.Header.Revision
+	fmt.Println("Revision:", rev)
 
-    gr, _ := kv.Get(ctx, "key")
-    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	gr, _ := kv.Get(ctx, "key")
+	fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-    // Modify the value of an existing key (create new revision)
-    kv.Put(ctx, "key", "555")
+	// Modify the value of an existing key (create new revision)
+	kv.Put(ctx, "key", "555")
 
-    gr, _ = kv.Get(ctx, "key")
-    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	gr, _ = kv.Get(ctx, "key")
+	fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 
-    // Get the value of the previous revision
-    gr, _ = kv.Get(ctx, "key", clientv3.WithRev(rev))
-    fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
+	// Get the value of the previous revision
+	gr, _ = kv.Get(ctx, "key", clientv3.WithRev(rev))
+	fmt.Println("Value: ", string(gr.Kvs[0].Value), "Revision: ", gr.Header.Revision)
 }

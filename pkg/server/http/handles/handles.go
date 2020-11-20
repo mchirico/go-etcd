@@ -2,11 +2,9 @@ package handles
 
 import (
 	"bytes"
-	"github.com/mchirico/go-etcd/pkg/etcdutils"
 	"github.com/mchirico/zcovid/pkg/echarts/gauge"
 	"github.com/mchirico/zcovid/pkg/echarts/heatmap"
 	"github.com/mchirico/zcovid/pkg/echarts/line"
-
 
 	"net/http"
 )
@@ -14,15 +12,29 @@ import (
 var Count = 0
 var CountStatus = 0
 
-func BaseRoot(w http.ResponseWriter, r *http.Request) {
+type HANDLE struct {
+	Process func() string
+}
 
-	//version := "v0.0.1"
+func (h HANDLE) BaseRoot(w http.ResponseWriter, r *http.Request) {
+
+	/*
+		curl -H "Authorization: SomeToken" localhost:3000
+		Value:  bob Revision:  1550
+		Value:  555 Revision:  1551
+
+
+		SomeToken
+	*/
+
+	reqToken := r.Header.Get("Authorization")
 
 	switch r.Method {
 	case "GET":
 		Count += 1
-		e := etcdutils.NewETC("/certs")
-		msg := e.EtcdRun()
+
+		msg := h.Process()
+		msg += "\n\n" + reqToken
 		w.Write([]byte(msg))
 	case "POST":
 		// msg := fmt.Sprintf("Hello world: POST: %v", r.FormValue("user"))
