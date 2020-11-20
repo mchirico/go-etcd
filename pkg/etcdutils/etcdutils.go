@@ -1,7 +1,7 @@
 package main
 
 import (
-    "context"
+	"context"
     "crypto/tls"
     "crypto/x509"
     "fmt"
@@ -17,10 +17,10 @@ var (
 	requestTimeout = 10 * time.Second
 )
 
-func main() {
+func Run() {
 	ctx, _ := context.WithTimeout(context.Background(), requestTimeout)
-	cert, err := tls.LoadX509KeyPair("certs/client.pem", "certs/client-key.pem")
-	caCert, err := ioutil.ReadFile("certs/ca.pem")
+	cert, err := tls.LoadX509KeyPair("../../certs/client.pem", "../../certs/client-key.pem")
+	caCert, err := ioutil.ReadFile("../../certs/ca.pem")
 	caCertPool := x509.NewCertPool()
 
 	if err != nil {
@@ -36,9 +36,9 @@ func main() {
 
 	cli, _ := clientv3.New(clientv3.Config{
 		DialTimeout: dialTimeout,
-		//Endpoints:   []string{"etcd.cwxstat.io:2379"},
-		Endpoints:   []string{"etcd2.cwxstat.io:443"},
-		//Endpoints:   []string{"goetc-sjykjak33q-ue.a.run.app:443"},
+		Endpoints:   []string{"etcd.cwxstat.io:2379"},
+
+
 		TLS:         tlsConfig,
 	})
 	defer cli.Close()
