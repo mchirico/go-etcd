@@ -36,7 +36,9 @@ func main() {
 
 	cli, _ := clientv3.New(clientv3.Config{
 		DialTimeout: dialTimeout,
-		Endpoints:   []string{"etcd.cwxstat.io:2379"},
+		//Endpoints:   []string{"etcd.cwxstat.io:2379"},
+		Endpoints:   []string{"etcd2.cwxstat.io:443"},
+		//Endpoints:   []string{"goetc-sjykjak33q-ue.a.run.app:443"},
 		TLS:         tlsConfig,
 	})
 	defer cli.Close()
