@@ -29,7 +29,9 @@ func NewETC(certsDir string) ETC {
 
 // "../../certs/client.pem"
 func (e ETC) EtcdRun() string {
-	ctx, _ := context.WithTimeout(context.Background(), requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+
 	cert, err := tls.LoadX509KeyPair(e.CertsDir+"/client.pem", e.CertsDir+"/client-key.pem")
 	caCert, err := ioutil.ReadFile(e.CertsDir + "/ca.pem")
 	caCertPool := x509.NewCertPool()
@@ -59,7 +61,8 @@ func (e ETC) EtcdRun() string {
 	LeaseDemo(ctx, cli, kv)
 	GetMultipleValuesWithPaginationDemo(ctx, kv)
 
-	Watch(cli)
+	Watch(ctx, cli)
+
 	for i := 0; i < 9; i++ {
 		Txn(ctx, kv)
 	}
@@ -139,9 +142,9 @@ func Txn(ctx context.Context, kv clientv3.KV) {
 
 }
 
-func Watch(cli *clientv3.Client) {
+func Watch(ctx context.Context, cli *clientv3.Client) {
 
-	rch := cli.Watch(context.Background(), "foo", clientv3.WithPrefix())
+	rch := cli.Watch(ctx, "foo", clientv3.WithPrefix())
 
 	go func(chn clientv3.WatchChan) {
 		for wresp := range chn {
