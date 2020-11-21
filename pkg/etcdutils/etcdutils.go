@@ -44,14 +44,16 @@ func (e ETC) EtcdRun() string {
 
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		RootCAs:      caCertPool,
+		//RootCAs:      caCertPool,
 	}
+
+	_ = tlsConfig
 
 	cli, _ := clientv3.New(clientv3.Config{
 		DialTimeout: dialTimeout,
-		Endpoints:   []string{"etcd.cwxstat.io:2379"},
+		Endpoints:   []string{"localhost:2379"},
 
-		TLS: tlsConfig,
+		//TLS: tlsConfig,
 	})
 	defer cli.Close()
 	kv := clientv3.NewKV(cli)
