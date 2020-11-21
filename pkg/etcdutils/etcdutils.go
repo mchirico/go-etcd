@@ -116,7 +116,7 @@ func LeaseDemo(ctx context.Context, cli *clientv3.Client, kv clientv3.KV) {
 	}
 
 	// Let the TTL expire
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	gr, _ = kv.Get(ctx, "key")
 	if len(gr.Kvs) == 0 {
