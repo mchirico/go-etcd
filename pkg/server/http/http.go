@@ -18,7 +18,6 @@ func SetupHandles() {
 	http.HandleFunc("/gauge", handles.Gauge)
 	http.HandleFunc("/line", handles.Line)
 	http.HandleFunc("/heatmap", handles.Heatmap)
-	//http.Handle("/static/", http.StripPrefix("/static", fs))
 
 }
 
