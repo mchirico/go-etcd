@@ -21,9 +21,14 @@ type ETC struct {
 	CertsDir string
 }
 
-func NewETC(certsDir string) ETC {
+func NewETC(certsDir ...string) ETC {
 	e := ETC{}
-	e.CertsDir = certsDir
+	if certsDir == nil {
+		e.CertsDir = "/certs"
+	} else {
+		e.CertsDir = certsDir[0]
+	}
+
 	return e
 }
 
